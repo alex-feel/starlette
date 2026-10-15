@@ -11,7 +11,7 @@ from concurrent.futures import Future
 from contextlib import AbstractContextManager
 from types import GeneratorType
 from typing import TYPE_CHECKING, Any, Literal, Self, TypedDict, TypeGuard, cast
-from urllib.parse import unquote, urljoin
+from urllib.parse import urljoin
 
 import anyio
 import anyio.abc
@@ -245,7 +245,7 @@ class _TestClientTransport(httpx.BaseTransport):
                 subprotocols = [value.strip() for value in subprotocol.split(",")]
             scope = {
                 "type": "websocket",
-                "path": unquote(path),
+                "path": path,
                 "raw_path": raw_path.split(b"?", 1)[0],
                 "root_path": self.root_path,
                 "scheme": scheme,
@@ -264,7 +264,7 @@ class _TestClientTransport(httpx.BaseTransport):
             "type": "http",
             "http_version": "1.1",
             "method": request.method,
-            "path": unquote(path),
+            "path": path,
             "raw_path": raw_path.split(b"?", 1)[0],
             "root_path": self.root_path,
             "scheme": scheme,

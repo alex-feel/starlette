@@ -441,6 +441,23 @@ def test_raw_path_with_querystring(test_client_factory: TestClientFactory) -> No
 
 
 @pytest.mark.parametrize(
+    ("path", "expected"),
+    [
+        ("/path%2520with%2520escape", "/path%20with%20escape"),
+        ("/n%2500", "/n%00"),
+    ],
+)
+def test_path_decoded_once(test_client_factory: TestClientFactory, path: str, expected: str) -> None:
+    async def app(scope: Scope, receive: Receive, send: Send) -> None:
+        response = Response(scope["path"])
+        await response(scope, receive, send)
+
+    client = test_client_factory(app)
+    response = client.get(path)
+    assert response.text == expected
+
+
+@pytest.mark.parametrize(
     ("base_url", "server", "host"),
     [
         ("http://[::1]", ["::1", 80], "[::1]"),
@@ -472,6 +489,24 @@ def test_websocket_raw_path_without_params(test_client_factory: TestClientFactor
     with client.websocket_connect("/hello-world", params={"foo": "bar"}) as websocket:
         data = websocket.receive_bytes()
         assert data == b"/hello-world"
+
+
+@pytest.mark.parametrize(
+    ("path", "expected"),
+    [
+        ("/path%2520with%2520escape", "/path%20with%20escape"),
+        ("/n%2500", "/n%00"),
+    ],
+)
+def test_websocket_path_decoded_once(test_client_factory: TestClientFactory, path: str, expected: str) -> None:
+    async def app(scope: Scope, receive: Receive, send: Send) -> None:
+        websocket = WebSocket(scope, receive=receive, send=send)
+        await websocket.accept()
+        await websocket.send_text(scope["path"])
+
+    client = test_client_factory(app)
+    with client.websocket_connect(path) as websocket:
+        assert websocket.receive_text() == expected
 
 
 def test_timeout_deprecation() -> None:
